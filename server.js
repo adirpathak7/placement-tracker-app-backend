@@ -1,14 +1,17 @@
 const jsonServer = require('json-server');
 const server = jsonServer.create();
-const path = require('path');
-const router = jsonServer.router(path.join(__dirname, 'data', 'data.json'));
+const router = jsonServer.router('data.json');
 const middlewares = jsonServer.defaults();
 
-const PORT = process.env.PORT || 3001;
-
 server.use(middlewares);
-server.use(router);
+server.use(jsonServer.bodyParser);
 
-server.listen(PORT, () => {
-    console.log(`JSON Server is running on port ${PORT}`);
+server.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    next();
+});
+
+server.use('/tasks', router);
+server.listen(process.env.PORT || 3001, () => {
+    console.log('JSON Server is running');
 });
