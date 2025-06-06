@@ -1,17 +1,35 @@
-const jsonServer = require('json-server');
-const server = jsonServer.create();
-const router = jsonServer.router('data.json');
-const middlewares = jsonServer.defaults();
+const express = require("express");
+const fs = require("fs");
+const cors = require("cors");
 
-server.use(middlewares);
-server.use(jsonServer.bodyParser);
+const app = express();
+const PORT = process.env.PORT || 3001;
 
-server.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    next();
+app.use(cors());
+app.use(express.json());
+
+const DATA_FILE = "./data/data.json";
+
+app.get("/tasks", (req, res) => {
+  try {
+    const rawData = fs.readFileSync(DATA_FILE);
+    const tasks = JSON.parse(rawData);
+    res.json(tasks);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to read tasks." });
+  }
 });
 
-server.use('/tasks', router);
-server.listen(process.env.PORT || 3001, () => {
-    console.log('JSON Server is running');
+app.post("/tasks", (req, res) => {
+  try {
+    const newTasks = req.body;
+    fs.writeFileSync(DATA_FILE, JSON.stringify(newTasks, null, 2));
+    res.status(200).json({ message: "Tasks updated successfully." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to save tasks." });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
