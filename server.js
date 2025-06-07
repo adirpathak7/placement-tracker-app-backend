@@ -1,16 +1,18 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const dotenv = require("dotenv");
 const Task = require("./models/Task");
+
+dotenv.config();
 
 const app = express();
 
-const mongoURI = "mongodb+srv://adi:aadirps%407@track-crack.ngabkno.mongodb.net/?retryWrites=true&w=majority&appName=track-crack";
+const mongoURI = process.env.MONGO_URL;
 
 mongoose.connect(mongoURI)
     .then(() => console.log("Connected to MongoDB Atlas"))
     .catch((err) => console.error("MongoDB connection error:", err));
-
 
 const PORT = process.env.PORT || 10000;
 
@@ -30,12 +32,7 @@ app.post("/tasks", async (req, res) => {
     try {
         const { username, todayWork, nextDayWork } = req.body;
 
-        const newTask = new Task({
-            username,
-            todayWork,
-            nextDayWork
-        });
-
+        const newTask = new Task({ username, todayWork, nextDayWork });
         await newTask.save();
 
         res.status(200).json({ data: newTask, message: "Task saved", status: true });
