@@ -1,49 +1,48 @@
 const express = require("express");
-const fs = require("fs");
+const mongoose = require("mongoose");
 const cors = require("cors");
+const Task = require("./models/Task");
+
 const app = express();
 
+const mongoURI = "mongodb+srv://adi:aadirps%407@track-crack.ngabkno.mongodb.net/?retryWrites=true&w=majority&appName=track-crack";
+
+mongoose.connect(mongoURI)
+    .then(() => console.log("Connected to MongoDB Atlas"))
+    .catch((err) => console.error("MongoDB connection error:", err));
+
+
 const PORT = process.env.PORT || 10000;
+
 app.use(cors());
 app.use(express.json());
 
-const DATA_FILE = "./data/data.json";
-
-if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify([]));
-}
-
-app.get("/tasks", (req, res) => {
+app.get("/tasks", async (req, res) => {
     try {
-        const rawData = fs.readFileSync(DATA_FILE);
-        const tasks = JSON.parse(rawData);
-        res.json({
-            data: tasks,
-            message: "Tasks fetched successfully",
-            status: true
-        });
+        const tasks = await Task.find();
+        res.json({ data: tasks, message: "Tasks fetched", status: true });
     } catch (err) {
-        res.status(500).json({ error: "Failed to read tasks." });
+        res.status(500).json({ error: "Failed to fetch tasks." });
     }
 });
 
-
-app.post("/tasks", (req, res) => {
+app.post("/tasks", async (req, res) => {
     try {
-        const newTask = req.body;
+        const { username, todayWork, nextDayWork } = req.body;
 
-        const rawData = fs.readFileSync(DATA_FILE);
-        const tasks = JSON.parse(rawData);
+        const newTask = new Task({
+            username,
+            todayWork,
+            nextDayWork
+        });
 
-        tasks.push(newTask);
-        fs.writeFileSync(DATA_FILE, JSON.stringify(tasks, null, 2));
+        await newTask.save();
 
-        res.status(201).json(newTask);
+        res.status(200).json({ data: newTask, message: "Task saved", status: true });
     } catch (err) {
         res.status(500).json({ error: "Failed to save task." });
     }
 });
-
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
